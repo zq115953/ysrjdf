@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:http="http://www.w3.org/1999/xhtml"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<div>
+   <div th:fragment="foot">
+    <div class="footer">
+           <div class="footer am-u-sm-centered">
+               <div class="am-vertical-align" style="text-align: center">
+                   <hr />
+                   <div class="am-vertical-align-bottom">
+                       <div style="color: #009688">
+                           &copy; 2018 夜深人静的风 - <i class="fa fa-coffee" style="margin: 0 5px"></i> nectar
+                       </div>
+                       <div id="footer" style="color: #009688">
+                           总访问量 <span id="totalVisitors"><strong></strong></span> 次  访客量 <span id="visitorVolume"><strong></strong></span> 人次
+                       </div>
+                       <div class="webLogo">
+                           <a href="http://www.cqjtu.edu.cn" target="_blank">
+                               重庆交通大学
+                           </a>
+                       </div>
+                       <div class="webLogo">
+                               计算机科学与技术专业
+                           </a>
+                       </div>
+                   </div>
+               </div>
+           </div>
+           <div class="sidebar_toggle" data-am-offcanvas="{target: '#offCanvas'}" id="sidebar_toggle">
+               <div class="sidebar_toggle_line_wrap">
+                   <span class="sidebar-toggle-line sidebar-toggle-line-first" style="width: 100%; top: 0; transform: rotateZ(0deg); opacity: 1; left:0"></span>
+                   <span class="sidebar-toggle-line sidebar-toggle-line-middle" style="width: 100%; opacity: 1; left: 0; top: 0; transform: rotateZ(0deg);"></span>
+                   <span class="sidebar-toggle-line sidebar-toggle-line-last" style="width: 100%; top: 0; transform: rotateZ(0deg); opacity: 1; left: 0;"></span>
+               </div>
+           </div>
+           <div class="am-offcanvas" id="offCanvas">
+               <div class="am-offcanvas-bar am-offcanvas-bar-flip">
+                   <div class="am-offcanvas-content">
+                       <div class="sidebar-inner">
+                           <div class="site-overview">
+                               <div class="img-author" style="text-align: center">
+                                   <p style="font-size: large;font-family: 仿宋">微信</p>
+                                   <div id="weixin">
+                                       <img class="weixinPublic" src="https://ysrjdf.oss-cn-beijing.aliyuncs.com/product/mmqrcode1528637141594.png" />
+                                   </div>
+                                   <div class="author-name">
+                                       夜深人静的风
+                                   </div>
+                                   <div class="author-words">
+                                       <p>专注于Spring,SpringBoot等后端技术探索</p>
+                                       <p>以及MySql数据库开发和SSM等后端流行框架学习</p>
+                                   </div>
+
+                               </div>
+                               <div class="site-state" style="opacity: 1; display: block; transform: translateX(0px);">
+                                   <div class="site-state-item learn-posts">
+                                       <a href="/archives">
+                                           <span class="archivesNum site-state-item-count"></span>
+                                           <span class="site-state-item-name">日志</span>
+                                       </a>
+                                   </div>
+                                   <div class="site-state-item learn-categories">
+                                       <a href="/categories" id="site-state-item-a">
+                                           <span class="categoriesNum site-state-item-count"></span>
+                                           <span class="site-state-item-name">分类</span>
+                                       </a>
+                                   </div>
+                                   <div class="site-state-item learn-tags">
+                                       <a href="/tags">
+                                           <span class="tagsNum site-state-item-count"></span>
+                                           <span class="site-state-item-name">标签</span>
+                                       </a>
+                                   </div>
+                               </div>
+                               <div class="contact-way">
+                                   <span><i class="fa fa-qq">&nbsp;&nbsp;1159532210</i></span>
+                                   <span><i class="fa fa-wechat">&nbsp;&nbsp;zq115953</i></span>
+                               </div>
+                               <div class="rss">
+                                   <div class="rss-site">
+                                       <a class="rss-site-a" href="/rss">
+                                           <i class="fa fa-rss"> RSS</i>
+                                       </a>
+                                   </div>
+                               </div>
+                               <div class="author-words">
+                                   <p>本人目前本科生在读</p>
+                                   <p>由于水平有限，希望大家多多支持</p>
+                                   <p>有不足之处也希望各位前辈指出</p>
+                               </div>
+                           </div>
+                       </div>
+                   </div>
+               </div>
+           </div>
+           <div class="am-gotop am-gotop-fixed" data-am-widget="gotop">
+               <a href="#top" id="toTop">
+               <span style="color: white" title="到顶部">
+                   <i class="fa fa-arrow-up"></i>
+               </span>
+               </a>
+           </div>
+       </div>
+       <!--成功消息盒-->
+       <div class="notice successNoticeAlert am-animation-slide-top">
+           <span class="successNotice"></span>
+       </div>
+       <!--失败消息盒-->
+       <div class="notice dangerNoticeAlert am-animation-slide-top">
+           <span class="dangerNotice"></span>
+       </div>
+       <div class="feedback am-animation-slide-top">
+           <a class="feedbackClose am-close am-close-alt am-close-spin am-icon-times"></a>
+           <div class="feedbackTitle">
+               反馈
+           </div>
+           <div class="feedbackWord">
+               您对于本博客网站有任何意见或是存在Bug的地方，欢迎进行反馈
+           </div>
+           <div class="feedbackForm">
+               <form class="am-form">
+                   <fieldset class="am-form-set">
+                       <textarea id="feedbackFormContent" placeholder="非常感谢您抽出时间填写问题反馈。必填"></textarea>
+                       <input class="feedbackFormQQ" placeholder="方便留下QQ或是微信联系你吗。选填" type="text" />
+                   </fieldset>
+                   <button class="feedbackFormBtn am-btn am-btn-primary am-btn-block" type="button">提交反馈</button>
+               </form>
+           </div>
+
+       </div>
+   </div>
+ </div>
+</body>
+</html>

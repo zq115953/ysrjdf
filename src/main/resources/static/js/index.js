@@ -127,7 +127,7 @@
         url: '/myArticles',
         dataType: 'json',
         data: {
-            rows:"10",
+            rows:"5",
             pageNum:currentPage
         },
         success: function (data) {

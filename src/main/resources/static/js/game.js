@@ -88,8 +88,11 @@ $("#start").one('click',function () {
 })
 
 $("#restart").click(function(){
-    window.location.reload();
-});
+    setInterval(function () {
+        $("#autore").load(location.href + " #autore");//注意后面DIV的ID前面的空格，很重要！没有空格的话，会出双眼皮！（也可以使用类名）
+    },1000);//8秒自动刷新
+})
+
 
 $("#first").click(function () {
     $("#games").attr("style","display:block;");

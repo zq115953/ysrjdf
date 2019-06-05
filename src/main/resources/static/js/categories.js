@@ -25,7 +25,7 @@ function putInTagArticleInfo(data) {
             '</header>'));
         var amCommentBd = $('<div class="am-comment-bd"></div>');
         amCommentBd.append($('<i class="am-icon-calendar"> <a href="/archives?archive='+ obj['publishDate'] + '">' + obj['publishDate'] + '</a></i>' +
-            '<i class="am-icon-folder"> <a href="/categories?category=' + obj['articleCategories'] + '">' + obj['articleCategories'] + '</a></i>'));
+            ' <a href="/categories?category=' + obj['articleCategories'] + '">' + obj['articleCategories'] + '</a>'));
         var amCommentBdTags = $('<i class="am-comment-bd-tags am-icon-tag"></i>');
         for(var i=0;i<obj['articleTags'].length;i++){
             var tag = $('<a href="/tags?tag=' + obj['articleTags'][i] + '">' + obj['articleTags'][i] + '</a>');
@@ -65,6 +65,8 @@ $.ajax({
 });
 
 function ajaxFirst(currentPage,category1) {
+    console.log(currentPage);
+    console.log(category1);
     $.ajax({
         type:'GET',
         url:'/getCategoryArticle',
@@ -77,7 +79,6 @@ function ajaxFirst(currentPage,category1) {
         success:function (data) {
             putInTagArticleInfo(data);
             scrollTo(0,0);//回到顶部
-
             //分页
             $("#pagination").paging({
                 rows:data['pageInfo']['pageSize'],//每页显示条数
@@ -88,7 +89,6 @@ function ajaxFirst(currentPage,category1) {
                     ajaxFirst(currentPage, category1);
                 }
             });
-
         },
         error:function () {
             alert("获取分类文章失败");
@@ -119,6 +119,7 @@ $.ajax({
         $('.categoryName').click(function () {
             var $this = $(this);
             var categoryName = $this.html();
+            console.log(categoryName);
             ajaxFirst(1,categoryName);
         })
     },

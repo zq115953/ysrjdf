@@ -1,14 +1,16 @@
 package com.nectar.myblog.entity;
 
-
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 /**
+
  * Describe: 用户实体类
  */
 @Data
+@NoArgsConstructor
 public class User {
 
     private int id;
@@ -64,9 +66,6 @@ public class User {
     private String avatarImgUrl;
 
     private List<Role> roles;
-
-    public User() {
-    }
 
     public User(String phone, String username, String password, String gender) {
         this.phone = phone;

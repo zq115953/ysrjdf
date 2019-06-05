@@ -26,8 +26,13 @@ import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 
+
+/**
+ * Describe:
+ */
 @Controller
 public class EditorControl {
+
     private Logger logger = LoggerFactory.getLogger(EditorControl.class);
 
     @Autowired
@@ -82,7 +87,7 @@ public class EditorControl {
         String[] tags = new String[articleTags.length+1];
         for(int i=0;i<articleTags.length;i++){
             //去掉可能出现的换行符
-            articleTags[i] = articleTags[i].replaceAll("<br>","");
+            articleTags[i] = articleTags[i].replaceAll("<br>","").replaceAll("&nbsp;","").replaceAll("\\s+","").trim();
             tags[i] = articleTags[i];
         }
         tags[articleTags.length] = article.getArticleType();
@@ -110,46 +115,43 @@ public class EditorControl {
         article.setUpdateDate(nowDate);
 
         returnJson = articleService.insertArticle(article);
-        System.out.println("publishArticle result is " +returnJson);
         return returnJson;
     }
 
-
     /**
-     * 判断是否有权限写博客
+     * 验证是否有权限写博客
      * @param principal
      * @return
      */
     @GetMapping("/canYouWrite")
     @ResponseBody
     public int canYouWrite(@AuthenticationPrincipal Principal principal){
+
         String username = null;
-        try{
+        try {
             username = principal.getName();
-        }catch (NullPointerException e){
-            System.out.println("This user is not login");
+        } catch (NullPointerException e){
+            logger.info("This user is not login");
         }
         String phone = userService.findPhoneByUsername(username);
         if(userService.isSuperAdmin(phone)){
-            return  1;
+            return 1;
         }
         return 0;
     }
 
     /**
-     * 获得所有分类
+     * 获得所有的分类
      * @return
      */
-    @GetMapping("findCategoriesName")
+    @GetMapping("/findCategoriesName")
     @ResponseBody
     public JSONArray findCategoriesName(){
         return categoryService.findCategoriesName();
     }
 
     /**
-     * 判断是否有未发布文章或者草稿
-     * @param request
-     * @return
+     * 获得是否有未发布的草稿文章或是修改文章
      */
     @GetMapping("/getDraftArticle")
     @ResponseBody
@@ -160,16 +162,16 @@ public class EditorControl {
         //判断是否为修改文章
         if(id != null){
             request.getSession().removeAttribute("id");
-            returnJson.put("status", 201);
+            returnJson.put("status",201);
             Article article = articleService.findArticleById(Integer.parseInt(id));
-            int lastItem = article.getArticleTags().lastIndexOf(",");
+            int lastItem = article.getArticleTags().lastIndexOf(',');
             String[] articleTags = StringAndArray.stringToArray(article.getArticleTags().substring(0, lastItem));
             returnJson.put("result", articleService.getDraftArticle(article, articleTags, tagService.getTagsSizeByTagName(articleTags[0])));
             return returnJson;
         }
-        //判断是否为写文章是否登录超时
-        if(request.getSession().getAttribute("article") !=null){
-            returnJson.put("status", 201);
+        //判断是否为写文章登录超时
+        if(request.getSession().getAttribute("article") != null){
+            returnJson.put("status",201);
             Article article = (Article) request.getSession().getAttribute("article");
             String[] articleTags = (String[]) request.getSession().getAttribute("articleTags");
             String articleGrade = (String) request.getSession().getAttribute("articleGrade");
@@ -179,7 +181,7 @@ public class EditorControl {
             request.getSession().removeAttribute("articleGrade");
             return returnJson;
         }
-        returnJson.put("status", 200);
+        returnJson.put("status",200);
         return returnJson;
     }
 
@@ -189,7 +191,7 @@ public class EditorControl {
     @RequestMapping("/uploadImage")
     public @ResponseBody
     Map<String,Object> uploadImage(HttpServletRequest request, HttpServletResponse response,
-                                   @RequestParam(value = "editormd-image-file", required = false) MultipartFile file){
+                             @RequestParam(value = "editormd-image-file", required = false) MultipartFile file){
         Map<String,Object> resultMap = new HashMap<String,Object>();
         try {
             request.setCharacterEncoding( "utf-8" );
@@ -203,10 +205,9 @@ public class EditorControl {
             TimeUtil timeUtil = new TimeUtil();
             String fileName = timeUtil.getLongTime() + "." + fileExtension;
 
-            String subcatalog = "blogArticles";
-            String fileUrl = fileUtil.uploadFile(fileUtil.multipartFileToFile(file, filePath, fileName), subcatalog);
+            String subCatalog = "blogArticles/" + new TimeUtil().getFormatDateForThree();
+            String fileUrl = fileUtil.uploadFile(fileUtil.multipartFileToFile(file, filePath, fileName), subCatalog);
 
-            System.out.println("fileUrl is " + fileUrl);
             resultMap.put("success", 1);
             resultMap.put("message", "上传成功");
             resultMap.put("url", fileUrl);

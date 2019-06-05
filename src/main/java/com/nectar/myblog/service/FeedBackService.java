@@ -5,9 +5,10 @@ import net.sf.json.JSONObject;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 反馈信息
+ * Describe:反馈业务操作
  */
 public interface FeedBackService {
+
     /**
      * 保存反馈信息
      * @param feedBack
@@ -21,4 +22,5 @@ public interface FeedBackService {
      * @return
      */
     JSONObject getAllFeedback(int rows, int pageNum);
+
 }

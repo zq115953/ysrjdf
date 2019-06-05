@@ -3,9 +3,9 @@ package com.nectar.myblog.controller;
 import com.nectar.myblog.entity.ArticleLikesRecord;
 import com.nectar.myblog.service.ArticleLikesRecordService;
 import com.nectar.myblog.service.ArticleService;
+import com.nectar.myblog.service.RedisService;
 import com.nectar.myblog.service.UserService;
 import com.nectar.myblog.utils.TimeUtil;
-import com.nectar.myblog.utils.TransCodingUtil;
 import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,10 +20,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import java.security.Principal;
 
 /**
- * 文章显示
+ * Describe: 文章显示页面
  */
 @Controller
 public class ShowArticleControl {
+
     private Logger logger = LoggerFactory.getLogger(ShowArticleControl.class);
 
     @Autowired
@@ -32,26 +33,24 @@ public class ShowArticleControl {
     ArticleService articleService;
     @Autowired
     UserService userService;
+    @Autowired
+    RedisService redisService;
 
     /**
      *  获取文章
      * @param articleId 文章id
-     * @param originalAuthor 原作者
      * @return
      */
-    @PostMapping("/getArticleByArticleIdAndOriginalAuthor")
-    public @ResponseBody
-    JSONObject getArticleByIdAndOriginalAuthor(@RequestParam("articleId") String articleId,
-                                               @RequestParam("originalAuthor") String originalAuthor,
-                                               @AuthenticationPrincipal Principal principal){
+    @PostMapping("/getArticleByArticleId")
+    public @ResponseBody JSONObject getArticleById(@RequestParam("articleId") String articleId,
+                                                                    @AuthenticationPrincipal Principal principal){
         String username = null;
         try {
             username = principal.getName();
         } catch (NullPointerException e){
-            logger.info("This user not login");
+            logger.info("This user is not login");
         }
-        JSONObject jsonObject = articleService.getArticleByArticleIdAndOriginalAuthor(Long.parseLong(articleId), TransCodingUtil.unicodeToString(originalAuthor),username);
-        logger.info("This article is " + jsonObject);
+        JSONObject jsonObject = articleService.getArticleByArticleId(Long.parseLong(articleId),username);
         return jsonObject;
     }
 
@@ -65,8 +64,7 @@ public class ShowArticleControl {
      */
     @GetMapping("/addArticleLike")
     public @ResponseBody int addArticleLike(@RequestParam("articleId") String articleId,
-                                            @RequestParam("originalAuthor") String originalAuthor,
-                                            @AuthenticationPrincipal Principal principal){
+                                     @AuthenticationPrincipal Principal principal){
 
         String username="";
         try {
@@ -76,15 +74,14 @@ public class ShowArticleControl {
             return -1;
         }
 
-        String stringOriginalAuthor = TransCodingUtil.unicodeToString(originalAuthor);
-        if(articleLikesRecordService.isLiked(Long.parseLong(articleId), stringOriginalAuthor, username)){
+        if(articleLikesRecordService.isLiked(Long.parseLong(articleId), username)){
             logger.info("你已经点过赞了");
             return -2;
         }
-        int likes = articleService.updateLikeByArticleIdAndOriginalAuthor(Long.parseLong(articleId), stringOriginalAuthor);
-        ArticleLikesRecord articleLikesRecord = new ArticleLikesRecord(Long.parseLong(articleId), stringOriginalAuthor, userService.findIdByUsername(username), new TimeUtil().getFormatDateForFive());
+        int likes = articleService.updateLikeByArticleId(Long.parseLong(articleId));
+        ArticleLikesRecord articleLikesRecord = new ArticleLikesRecord(Long.parseLong(articleId), userService.findIdByUsername(username), new TimeUtil().getFormatDateForFive());
         articleLikesRecordService.insertArticleLikesRecord(articleLikesRecord);
-        logger.info("点赞成功");
+        redisService.readThumbsUpRecordOnRedis("articleThumbsUp", 1);
         return likes;
     }
 

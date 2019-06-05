@@ -3,6 +3,7 @@ package com.nectar.myblog.service.impl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.nectar.myblog.Component.StringAndArray;
+import com.nectar.myblog.constant.SiteOwner;
 import com.nectar.myblog.entity.Article;
 import com.nectar.myblog.mapper.ArticleMapper;
 import com.nectar.myblog.service.*;
@@ -14,14 +15,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.sql.Time;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Describe:
+ */
 @Service
 public class ArticleServiceImpl implements ArticleService {
+
     private Logger logger = LoggerFactory.getLogger(ArticleServiceImpl.class);
 
     @Autowired
@@ -34,43 +38,50 @@ public class ArticleServiceImpl implements ArticleService {
     private VisitorService visitorService;
     @Autowired
     private ArchiveService archiveService;
+    @Autowired
+    private CommentService commentService;
+    @Autowired
+    private CommentLikesRecordService commentLikesRecordService;
 
     @Override
     public JSONObject insertArticle(Article article) {
         JSONObject articleReturn = new JSONObject();
-        try{
+
+        try {
             if("".equals(article.getOriginalAuthor())){
                 article.setOriginalAuthor(article.getAuthor());
             }
             if("".equals(article.getArticleUrl())){
-                String url = "http://www.ysrj.work/findArticle?articleId=" + article.getArticleId() + "&originalAuthor=" + article.getOriginalAuthor();
-                article.setUpdateDate(url);
+                //保存文章的url
+                String url = SiteOwner.SITE_OWNER_URL + "/article/" + article.getArticleId();
+                article.setArticleUrl(url);
             }
             Article endArticleId = articleMapper.findEndArticleId();
-            //设置上一篇的id
+            //设置文章的上一篇文章id
             if(endArticleId != null){
-                article.setLastArticleId(endArticleId.getLastArticleId());
+                article.setLastArticleId(endArticleId.getArticleId());
             }
             articleMapper.insertArticle(article);
-            //判断发表的文章归档日期是否存在，不存在则插入归档日期
+            //判断发表文章的归档日期是否存在，不存在则插入归档日期
             TimeUtil timeUtil = new TimeUtil();
             String archiveName = timeUtil.timeWhippletreeToYear(article.getPublishDate().substring(0, 7));
             archiveService.addArchiveName(archiveName);
-            //新文章加入访客
-            visitorService.insertVisitorArticlePage("findArticle?articleId=" + article.getArticleId() + "&originalAuthor=" + article.getOriginalAuthor());
-            //设置下一篇文章的下一篇文章的id
-            if(endArticleId!=null){
-                articleService.updateArticleLastOrNextId("nextArticleId", article.getArticleId(), endArticleId.getArticleId() );
+            //新文章加入访客量
+            visitorService.insertVisitorArticlePage("article/" + article.getArticleId());
+            //设置上一篇文章的下一篇文章id
+            if(endArticleId != null){
+                articleService.updateArticleLastOrNextId("nextArticleId", article.getArticleId(), endArticleId.getArticleId());
             }
-            articleReturn.put("status", 200);
+
+            articleReturn.put("status",200);
             articleReturn.put("articleTitle",article.getArticleTitle());
             articleReturn.put("updateDate",article.getUpdateDate());
             articleReturn.put("author",article.getOriginalAuthor());
-            //本博客中的url
-            articleReturn.put("articleUrl","/findArticle?articleId=" + article.getArticleId() + "&originalAuthor=" + article.getOriginalAuthor());
+            //本博客中的URL
+            articleReturn.put("articleUrl","/article/" + article.getArticleId());
             return articleReturn;
-        }catch (Exception e){
-            articleReturn.put("status", 500);
+        } catch (Exception e){
+            articleReturn.put("status",500);
             logger.error("用户 " + article.getAuthor() + " 保存文章 " + article.getArticleTitle() + " 失败");
             e.printStackTrace();
             return articleReturn;
@@ -82,7 +93,7 @@ public class ArticleServiceImpl implements ArticleService {
         Article a = articleMapper.getArticleUrlById(article.getId());
         if("原创".equals(article.getArticleType())){
             article.setOriginalAuthor(article.getAuthor());
-            String url = "http://www.ysrj.work/findArticle?articleId="+ a.getArticleId() + "&originalAuthor=" + a.getOriginalAuthor();
+            String url = SiteOwner.SITE_OWNER_URL + "/article/" + a.getArticleId();
             article.setArticleUrl(url);
         }
         articleMapper.updateArticleById(article);
@@ -92,13 +103,13 @@ public class ArticleServiceImpl implements ArticleService {
         articleReturn.put("updateDate",article.getUpdateDate());
         articleReturn.put("author",article.getOriginalAuthor());
         //本博客中的URL
-        articleReturn.put("articleUrl","/findArticle?articleId=" + a.getArticleId() + "&originalAuthor=" + a.getOriginalAuthor());
+        articleReturn.put("articleUrl","/article/" + a.getArticleId());
         return articleReturn;
     }
 
     @Override
-    public JSONObject getArticleByArticleIdAndOriginalAuthor(long articleId, String originalAuthor, String username) {
-        Article article = articleMapper.getArticleByArticleIdAndOriginalAuthor(articleId, originalAuthor);
+    public JSONObject getArticleByArticleId(long articleId, String username) {
+        Article article = articleMapper.getArticleByArticleId(articleId);
 
         JSONObject jsonObject = new JSONObject();
         if(article != null){
@@ -106,6 +117,7 @@ public class ArticleServiceImpl implements ArticleService {
             Article nextArticle = articleMapper.findArticleByArticleId(article.getNextArticleId());
             jsonObject.put("status","200");
             jsonObject.put("author",article.getAuthor());
+            jsonObject.put("articleId",articleId);
             jsonObject.put("originalAuthor",article.getOriginalAuthor());
             jsonObject.put("articleTitle",article.getArticleTitle());
             jsonObject.put("publishDate",article.getPublishDate());
@@ -119,7 +131,7 @@ public class ArticleServiceImpl implements ArticleService {
             if(username == null){
                 jsonObject.put("isLiked",0);
             }else {
-                if(articleLikesRecordService.isLiked(articleId, originalAuthor,username)){
+                if(articleLikesRecordService.isLiked(articleId,username)){
                     jsonObject.put("isLiked",1);
                 }else {
                     jsonObject.put("isLiked",0);
@@ -128,7 +140,7 @@ public class ArticleServiceImpl implements ArticleService {
             if(lastArticle != null){
                 jsonObject.put("lastStatus","200");
                 jsonObject.put("lastArticleTitle",lastArticle.getArticleTitle());
-                jsonObject.put("lastArticleUrl","/findArticle?articleId=" + lastArticle.getArticleId() + "&originalAuthor=" + lastArticle.getOriginalAuthor());
+                jsonObject.put("lastArticleUrl","/article/" + lastArticle.getArticleId());
             } else {
                 jsonObject.put("lastStatus","500");
                 jsonObject.put("lastInfo","无");
@@ -136,7 +148,7 @@ public class ArticleServiceImpl implements ArticleService {
             if(nextArticle != null){
                 jsonObject.put("nextStatus","200");
                 jsonObject.put("nextArticleTitle",nextArticle.getArticleTitle());
-                jsonObject.put("nextArticleUrl","/findArticle?articleId=" + nextArticle.getArticleId() + "&originalAuthor=" + nextArticle.getOriginalAuthor());
+                jsonObject.put("nextArticleUrl","/article/" + nextArticle.getArticleId());
             } else {
                 jsonObject.put("nextStatus","500");
                 jsonObject.put("nextInfo","无");
@@ -151,11 +163,13 @@ public class ArticleServiceImpl implements ArticleService {
     }
 
     @Override
-    public Map<String, String> findArticleTitleByArticleIdAndOriginalAuthor(long articleId, String originalAuthor) {
-        Article articleInfo = articleMapper.findArticleTitleByArticleIdAndOriginalAuthor(articleId, originalAuthor);
-        Map<String,String> articleMap = new HashMap<>();
-        articleMap.put("articleTitle", articleInfo.getArticleTitle());
-        articleMap.put("articleTabloid", articleInfo.getArticleTabloid());
+    public Map<String,String> findArticleTitleByArticleId(long articleId) {
+        Article articleInfo = articleMapper.findArticleTitleByArticleId(articleId);
+        Map<String, String> articleMap = new HashMap<>();
+        if(articleInfo != null){
+            articleMap.put("articleTitle", articleInfo.getArticleTitle());
+            articleMap.put("articleTabloid", articleInfo.getArticleTabloid());
+        }
         return articleMap;
     }
 
@@ -167,13 +181,12 @@ public class ArticleServiceImpl implements ArticleService {
         PageHelper.startPage(pageNum,pageSize);
         List<Article> articles = articleMapper.findAllArticles();
         PageInfo<Article> pageInfo = new PageInfo<>(articles);
-        System.out.println("appsPageInfo is" + pageInfo);
-        List<Map<String,Object>> newArticles = new ArrayList<>();
-        Map<String,Object> map;
+        List<Map<String, Object>> newArticles = new ArrayList<>();
+        Map<String, Object> map;
 
         for(Article article : articles){
             map = new HashMap<>();
-            map.put("thisArticleUrl", "/findArticle?articleId=" + article.getArticleId() + "&originalAuthor=" + article.getOriginalAuthor());
+            map.put("thisArticleUrl", "/article/" + article.getArticleId());
             map.put("articleTags",StringAndArray.stringToArray(article.getArticleTags()));
             map.put("articleTitle", article.getArticleTitle());
             map.put("articleType", article.getArticleType());
@@ -202,28 +215,31 @@ public class ArticleServiceImpl implements ArticleService {
         if("lastArticleId".equals(lastOrNext)){
             articleMapper.updateArticleLastId(lastOrNextArticleId, articleId);
         }
-        if ("lastOrNextArticleId".equals(lastOrNext)){
-            articleMapper.updateArticleLastId(lastOrNextArticleId,articleId );
+        if("nextArticleId".equals(lastOrNext)){
+            articleMapper.updateArticleNextId(lastOrNextArticleId, articleId);
         }
     }
 
     @Override
-    public int updateLikeByArticleIdAndOriginalAuthor(long articleId, String originalAuthor) {
-        articleMapper.updateLikeByArticleIdAndOriginalAuthor(articleId, originalAuthor);
-        return articleMapper.findLikesByArticleIdAndOriginalAuthor(articleId, originalAuthor);
+    public int updateLikeByArticleId(long articleId) {
+
+        articleMapper.updateLikeByArticleId(articleId);
+        return articleMapper.findLikesByArticleId(articleId);
     }
 
     @Override
     public JSONObject findArticleByTag(String tag, int rows, int pageNum) {
-        PageHelper.startPage(pageNum,rows);
+
+        PageHelper.startPage(pageNum, rows);
         List<Article> articles = articleMapper.findArticleByTag(tag);
         PageInfo<Article> pageInfo = new PageInfo<>(articles);
         JSONObject articleJson;
         JSONArray articleJsonArray = new JSONArray();
-        for (Article article:articles) {
+        //二次判断标签是否匹配
+        for(Article article : articles){
             String[] tagsArray = StringAndArray.stringToArray(article.getArticleTags());
-            for (String srt : tagsArray) {
-                if (srt.equals(tag)) {
+            for(String str : tagsArray){
+                if(str.equals(tag)){
                     articleJson = new JSONObject();
                     articleJson.put("articleId", article.getArticleId());
                     articleJson.put("originalAuthor", article.getOriginalAuthor());
@@ -254,14 +270,15 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     public JSONObject findArticleByCategory(String category, int rows, int pageNum) {
+
         List<Article> articles;
         PageInfo<Article> pageInfo;
         JSONArray articleJsonArray = new JSONArray();
-        PageHelper.startPage(pageNum,rows);
+        PageHelper.startPage(pageNum, rows);
         if("".equals(category)){
             articles = articleMapper.findAllArticlesPartInfo();
             category = "全部分类";
-        }else {
+        } else {
             articles = articleMapper.findArticleByCategory(category);
         }
         pageInfo = new PageInfo<>(articles);
@@ -281,7 +298,6 @@ public class ArticleServiceImpl implements ArticleService {
         jsonObject.put("result",articleJsonArray);
         jsonObject.put("category",category);
         jsonObject.put("pageInfo",pageJson);
-        System.out.println("This category's articleInfo are " + jsonObject);
 
         return jsonObject;
     }
@@ -356,7 +372,7 @@ public class ArticleServiceImpl implements ArticleService {
             articleJson.put("articleTitle",article.getArticleTitle());
             articleJson.put("articleCategories",article.getArticleCategories());
             articleJson.put("publishDate",article.getPublishDate());
-            String pageName = "findArticle?articleId=" + article.getArticleId() + "&originalAuthor=" + article.getOriginalAuthor();
+            String pageName = "article/" + article.getArticleId();
             articleJson.put("visitorNum",visitorService.getNumByPageName(pageName));
 
             returnJsonArray.add(articleJson);
@@ -381,6 +397,7 @@ public class ArticleServiceImpl implements ArticleService {
         return articleMapper.findArticleById(id);
     }
 
+
     @Override
     public int countArticleCategoryByCategory(String category) {
         return articleMapper.countArticleCategoryByCategory(category);
@@ -394,6 +411,25 @@ public class ArticleServiceImpl implements ArticleService {
     @Override
     public int countArticle() {
         return articleMapper.countArticle();
+    }
+
+    @Override
+    public int deleteArticle(long id) {
+        try {
+            Article deleteArticle = articleMapper.findAllArticleId(id);
+            articleMapper.updateLastOrNextId("lastArticleId", deleteArticle.getLastArticleId(), deleteArticle.getNextArticleId());
+            articleMapper.updateLastOrNextId("nextArticleId", deleteArticle.getNextArticleId(), deleteArticle.getLastArticleId());
+            //删除本篇文章
+            articleMapper.deleteByArticleId(deleteArticle.getArticleId());
+            //删除与该文章有关的所有文章点赞记录、文章评论、文章评论记录
+            commentService.deleteCommentByArticleId(deleteArticle.getArticleId());
+            commentLikesRecordService.deleteCommentLikesRecordByArticleId(deleteArticle.getArticleId());
+            articleLikesRecordService.deleteArticleLikesRecordByArticleId(deleteArticle.getArticleId());
+        }catch (Exception e){
+            logger.error("删除文章失败，文章id=" + id);
+            return 0;
+        }
+        return 1;
     }
 
     /**
@@ -414,4 +450,5 @@ public class ArticleServiceImpl implements ArticleService {
         }
         return articleJsonArray;
     }
+
 }

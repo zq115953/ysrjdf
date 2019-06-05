@@ -3,7 +3,9 @@ package com.nectar.myblog.service.impl;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.nectar.myblog.entity.Comment;
+import com.nectar.myblog.entity.UserReadNews;
 import com.nectar.myblog.mapper.CommentMapper;
+import com.nectar.myblog.redis.HashRedisServiceImpl;
 import com.nectar.myblog.service.ArticleService;
 import com.nectar.myblog.service.CommentLikesRecordService;
 import com.nectar.myblog.service.CommentService;
@@ -15,57 +17,64 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-
 import java.util.List;
 
+/**
+ * Describe:
+ */
 @Service
 public class CommentServiceImpl implements CommentService {
 
     private Logger logger = LoggerFactory.getLogger(CommentServiceImpl.class);
 
     @Autowired
-    CommentLikesRecordService commentLikesRecordService;
-    @Autowired
     CommentMapper commentMapper;
+    @Autowired
+    CommentLikesRecordService commentLikesRecordService;
     @Autowired
     ArticleService articleService;
     @Autowired
     UserService userService;
-
+    @Autowired
+    HashRedisServiceImpl hashRedisServiceImpl;
 
     @Override
-    public Comment insertCommnet(Comment comment, String respondent) {
-        String commentContent = comment.getCommentContent();
-        if('@' == commentContent.charAt(0)){
-            comment.setCommentContent(commentContent.substring(respondent.length() + 1));
+    public Comment insertComment(Comment comment) {
+        if(comment.getAnswererId() == comment.getRespondentId()){
+            comment.setIsRead(0);
         }
         commentMapper.insertComment(comment);
+        //redis中保存该用户未读消息
+        addNotReadNews(comment);
         return comment;
     }
 
     @Override
-    public JSONArray findCommentByArticleIdAndOriginalAuthor(long articleId, String originalAuthor, String username) {
-        List<Comment> comments = commentMapper.findCommentByArticleIdAndOriginalAuthorAndPid(articleId, originalAuthor, 0);
+    public JSONArray findCommentByArticleId(long articleId, String username) {
+
+        List<Comment> commentLists = commentMapper.findCommentByArticleIdAndPid(articleId, 0);
         JSONArray commentJsonArray = new JSONArray();
         JSONArray replyJsonArray;
         JSONObject commentJsonObject;
         JSONObject replyJsonObject;
         List<Comment> replyLists;
 
-        for (Comment comment :comments){
+        for(Comment comment : commentLists){
             commentJsonObject = new JSONObject();
-            replyLists = new JSONArray();
+
+            replyLists = commentMapper.findCommentByArticleIdAndPidNoOrder(articleId, comment.getId());
+
             replyJsonArray = new JSONArray();
             //封装所有评论中的回复
-            for (Comment reply : replyLists){
+            for(Comment reply : replyLists){
                 replyJsonObject = new JSONObject();
+                replyJsonObject.put("id",reply.getId());
                 replyJsonObject.put("answerer",userService.findUsernameById(reply.getAnswererId()));
                 replyJsonObject.put("commentDate",reply.getCommentDate());
                 replyJsonObject.put("commentContent",reply.getCommentContent());
                 replyJsonObject.put("respondent",userService.findUsernameById(reply.getRespondentId()));
                 replyJsonArray.add(replyJsonObject);
             }
-
 
             //封装评论
             commentJsonObject.put("id",comment.getId());
@@ -79,7 +88,7 @@ public class CommentServiceImpl implements CommentService {
             if(username == null){
                 commentJsonObject.put("isLiked",0);
             } else {
-                if(commentLikesRecordService.isLiked(articleId, originalAuthor, comment.getId(), username)){
+                if(commentLikesRecordService.isLiked(articleId, comment.getId(), username)){
                     commentJsonObject.put("isLiked",1);
                 } else {
                     commentJsonObject.put("isLiked",0);
@@ -94,11 +103,11 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public JSONArray findReplyByArticleIdAndOriginalAuthorAndPid(long articleId, String originalAuthor, long pId) {
-        List<Comment> commentList = commentMapper.findCommentByArticleIdAndOriginalAuthorAndPidNoOrder(articleId, originalAuthor, pId);
+    public JSONArray findReplyByArticleIdAndPid(long articleId, long pId) {
+        List<Comment> commentList = commentMapper.findCommentByArticleIdAndPidNoOrder(articleId, pId);
         JSONObject jsonObject;
         JSONArray jsonArray = new JSONArray();
-        for (Comment comment : commentList){
+        for(Comment comment : commentList){
             jsonObject = new JSONObject();
             jsonObject.put("answerer", userService.findUsernameById(comment.getAnswererId()));
             jsonObject.put("respondent", userService.findUsernameById(comment.getRespondentId()));
@@ -115,6 +124,7 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public JSONArray replyReplyReturn(Comment comment, String answerer, String respondent) {
+
         JSONObject jsonObject1 = new JSONObject();
         JSONArray jsonArray = new JSONArray();
         jsonObject1.put("answerer", answerer);
@@ -132,13 +142,14 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public int updateLikeByArticleIdAndOriginalAuthorAndId(long articleId, String originalAuthor, long id) {
-        commentMapper.updateLikeByArticleIdAndOriginalAuthorAndId(articleId, originalAuthor, id);
-        return commentMapper.findLikesByArticleIdAndOriginalAuthorAndId(articleId, originalAuthor, id);
+    public int updateLikeByArticleIdAndId(long articleId, long id) {
+        commentMapper.updateLikeByArticleIdAndId(articleId, id);
+        return commentMapper.findLikesByArticleIdAndId(articleId, id);
     }
 
     @Override
     public JSONObject findFiveNewComment(int rows, int pageNum) {
+
         JSONObject returnJson = new JSONObject();
         PageHelper.startPage(pageNum, rows);
         List<Comment> fiveComments = commentMapper.findFiveNewComment();
@@ -152,12 +163,12 @@ public class CommentServiceImpl implements CommentService {
             if(comment.getPId() != 0){
                 comment.setCommentContent("@" + userService.findUsernameById(comment.getRespondentId()) + " " + comment.getCommentContent());
             }
+            jsonObject.put("id",comment.getId());
             jsonObject.put("articleId",comment.getArticleId());
-            jsonObject.put("originalAuthor",comment.getOriginalAuthor());
             jsonObject.put("answerer",userService.findUsernameById(comment.getAnswererId()));
             jsonObject.put("commentDate",comment.getCommentDate().substring(0,10));
             jsonObject.put("commentContent",comment.getCommentContent());
-            jsonObject.put("articleTitle",articleService.findArticleTitleByArticleIdAndOriginalAuthor(comment.getArticleId(),comment.getOriginalAuthor()).get("articleTitle"));
+            jsonObject.put("articleTitle",articleService.findArticleTitleByArticleId(comment.getArticleId()).get("articleTitle"));
             jsonArray.add(jsonObject);
         }
         returnJson.put("status",200);
@@ -176,9 +187,10 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public JSONObject getUserComment(int rows, int pageNum, String username) {
+
         int userId = userService.findIdByUsername(username);
         PageHelper.startPage(pageNum, rows);
-        List<Comment> comments = commentMapper.getUserComment(userId);
+        List<Comment> comments = commentMapper.getUserCommentByRespondentId(userId);
         PageInfo<Comment> pageInfo = new PageInfo<>(comments);
 
         JSONObject returnJson = new JSONObject();
@@ -187,21 +199,17 @@ public class CommentServiceImpl implements CommentService {
         JSONArray commentJsonArray = new JSONArray();
         for(Comment comment : comments){
             commentJson = new JSONObject();
+            commentJson.put("id",comment.getId());
+            commentJson.put("pId",comment.getPId());
             commentJson.put("articleId",comment.getArticleId());
-            commentJson.put("originalAuthor",comment.getOriginalAuthor());
-            commentJson.put("articleTitle",articleService.findArticleTitleByArticleIdAndOriginalAuthor(comment.getArticleId(), comment.getOriginalAuthor()).get("articleTitle"));
-            commentJson.put("answerer", username);
-            if(comment.getPId() == 0){
-                commentJson.put("commentContent",comment.getCommentContent());
-                commentJson.put("replyNum",commentMapper.countReplyNumById(comment.getId()));
-            } else {
-                commentJson.put("commentContent","@" + userService.findUsernameById(comment.getRespondentId()) + " " + comment.getCommentContent());
-                commentJson.put("replyNum",commentMapper.countReplyNumByIdAndRespondentId(comment.getPId(), userId, comment.getId()));
-            }
+            commentJson.put("articleTitle",articleService.findArticleTitleByArticleId(comment.getArticleId()).get("articleTitle"));
+            commentJson.put("answerer", userService.findUsernameById(comment.getAnswererId()));
             commentJson.put("commentDate",comment.getCommentDate());
+            commentJson.put("isRead",comment.getIsRead());
             commentJsonArray.add(commentJson);
         }
         returnJson.put("result",commentJsonArray);
+        returnJson.put("msgIsNotReadNum",commentMapper.countIsReadNumByRespondentId(userId));
 
         JSONObject pageJson = new JSONObject();
         pageJson.put("pageNum",pageInfo.getPageNum());
@@ -210,9 +218,56 @@ public class CommentServiceImpl implements CommentService {
         pageJson.put("pages",pageInfo.getPages());
         pageJson.put("isFirstPage",pageInfo.isIsFirstPage());
         pageJson.put("isLastPage",pageInfo.isIsLastPage());
-
         returnJson.put("pageInfo",pageJson);
 
         return returnJson;
     }
+
+    @Override
+    public int commentNum() {
+        return commentMapper.commentNum();
+    }
+
+    @Override
+    public void deleteCommentByArticleId(long articleId) {
+        commentMapper.deleteCommentByArticleId(articleId);
+    }
+
+    @Override
+    public int readOneCommentRecord(int id) {
+        try {
+            commentMapper.readCommentRecordById(id);
+            return 1;
+        } catch (Exception e){
+            e.printStackTrace();
+            return 0;
+        }
+    }
+
+    @Override
+    public JSONObject readAllComment(String username) {
+        int respondentId = userService.findIdByUsername(username);
+        commentMapper.readCommentRecordByRespondentId(respondentId);
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("status",200);
+        jsonObject.put("result","success");
+        return jsonObject;
+    }
+
+    /**
+     * 保存评论成功后往redis中增加一条未读评论数
+     */
+    private void addNotReadNews(Comment comment){
+        if(comment.getRespondentId() != comment.getAnswererId()){
+            boolean isExistKey = hashRedisServiceImpl.hasKey(comment.getRespondentId()+"");
+            if(!isExistKey){
+                UserReadNews news = new UserReadNews(1,1,0);
+                hashRedisServiceImpl.put(String.valueOf(comment.getRespondentId()), news, UserReadNews.class);
+            } else {
+                hashRedisServiceImpl.hashIncrement(comment.getRespondentId()+"", "allNewsNum",1);
+                hashRedisServiceImpl.hashIncrement(comment.getRespondentId()+"", "commentNum",1);
+            }
+        }
+    }
+
 }

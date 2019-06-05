@@ -2,7 +2,7 @@ package com.nectar.myblog.service.security;
 
 import com.nectar.myblog.entity.Role;
 import com.nectar.myblog.entity.User;
-import com.nectar.myblog.repository.mybatis.UserRepository;
+import com.nectar.myblog.mapper.UserMapper;
 import com.nectar.myblog.service.UserService;
 import com.nectar.myblog.utils.TimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,15 +21,17 @@ import java.util.List;
 @Component
 public class CustomUserService implements UserDetailsService{
 
-    @Autowired
-    UserRepository userRepository;
+
     @Autowired
     UserService userService;
+    @Autowired
+    UserMapper userMapper;
 
     @Override
     public UserDetails loadUserByUsername(String phone) throws UsernameNotFoundException{
 
-        User user = userRepository.findByPhone(phone);
+
+        User user = userMapper.getUsernameAndRolesByPhone(phone);
 
         if(user == null){
             return (UserDetails) new UsernameNotFoundException("用户不存在");

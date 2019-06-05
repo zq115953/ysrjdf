@@ -1,25 +1,19 @@
 package com.nectar.myblog.service;
 
-import net.sf.json.JSONObject;
-
+import com.nectar.myblog.entity.Result;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * 访客业务
+ * Describe:访客业务操作
  */
 public interface VisitorService {
+
     /**
      * 通过页名增加访客量
      * @param pageName
      */
-    void addVisitorNumByPageName(String pageName, HttpServletRequest request);
+    Result addVisitorNumByPageName(String pageName, HttpServletRequest request);
 
-    /**
-     * 通过页名获得总访问量和访客量
-     * @param pageName 页名
-     * @return
-     */
-    JSONObject getVisitorNumByPageName(String pageName);
 
     /**
      * 通过页名获得访客量
@@ -38,7 +32,10 @@ public interface VisitorService {
      * 获得总访问量
      * @return
      */
-    long getAllVisitor();
+    long getTotalVisitor();
 
-
+    /**
+     * 通过页名更新访客人数
+     */
+    void updateVisitorNumByPageName(String pageName, String visitorNum);
 }

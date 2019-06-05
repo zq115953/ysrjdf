@@ -8,40 +8,38 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Map;
 
 /**
- * 文章业务操作
+ * Describe: 文章业务操作
  */
 public interface ArticleService {
+
     /**
      * 保存文章
-     * @param article
-     * @return
+     * @param article 文章
+     * @return  status: 200--成功   500--失败
      */
+
     JSONObject insertArticle(Article article);
 
     /**
      * 修改文章
-     * @param article
      * @return
      */
     @Transactional
     JSONObject updateArticleById(Article article);
 
-
     /**
      * 获得文章
      * @param articleId 文章id
-     * @param originalAuthor 原作者
      * @return
      */
-    JSONObject getArticleByArticleIdAndOriginalAuthor(long articleId, String originalAuthor, String username);
+    JSONObject getArticleByArticleId(long articleId, String username);
 
     /**
-     * 通过文章id和原作者获得文章名
-     * @param articleId 文章id
-     * @param originalAuthor 文章原作者
+     * 通过文章id获得文章名和文章摘要
+     * @param id 文章id
      * @return 文章名
      */
-    Map<String, String> findArticleTitleByArticleIdAndOriginalAuthor(long articleId, String originalAuthor);
+    Map<String, String> findArticleTitleByArticleId(long id);
 
     /**
      * 分页获得所有文章
@@ -62,10 +60,9 @@ public interface ArticleService {
     /**
      * 文章点赞
      * @param articleId 文章id
-     * @param originalAuthor 文章原作者
      * @return 目前点赞数
      */
-    int updateLikeByArticleIdAndOriginalAuthor(long articleId, String originalAuthor);
+    int updateLikeByArticleId(long articleId);
 
     /**
      * 通过标签分页获得文章部分信息
@@ -127,5 +124,13 @@ public interface ArticleService {
      * @return 所有文章的数量
      */
     int countArticle();
+
+    /**
+     * 通过id删除文章
+     * @param id 文章id
+     * @return 1--删除成功  0--删除失败
+     */
+    @Transactional
+    int deleteArticle(long id);
 
 }

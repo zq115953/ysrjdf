@@ -1,5 +1,6 @@
 package com.nectar.myblog.mapper;
 
+import com.nectar.myblog.entity.Role;
 import com.nectar.myblog.entity.User;
 import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Repository;
@@ -12,6 +13,17 @@ import java.util.List;
 @Mapper
 @Repository
 public interface UserMapper {
+
+    @Select("select * from user where phone=#{phone}")
+    @Results({
+            @Result(column = "username", property = "username"),
+            @Result(column = "password", property = "password"),
+            @Result(column = "phone", property = "roles", javaType = List.class, many = @Many(select = "com.nectar.myblog.mapper.UserMapper.getRoleNameByPhone")),
+    })
+    User getUsernameAndRolesByPhone(@Param("phone") String phone);
+
+    @Select("select r.name from user u LEFT JOIN user_role sru on u.id= sru.User_id LEFT JOIN role r on sru.Role_id=r.id where phone=#{phone}")
+    Role getRoleNameByPhone(String phone);
 
     @Select("select * from user where phone=#{phone}")
     User findUserByPhone(@Param("phone") String phone);
@@ -38,7 +50,7 @@ public interface UserMapper {
     int findUserIdByPhone(@Param("phone") String phone);
 
     @Update("update user set password=#{password} where phone=#{phone}")
-    void updatePassword(@Param("phone") String phone,@Param("password") String password);
+    void updatePassword(@Param("phone") String phone, @Param("password") String password);
 
     @Select("select phone from user where username=#{username}")
     String findPhoneByUsername(@Param("username") String username);

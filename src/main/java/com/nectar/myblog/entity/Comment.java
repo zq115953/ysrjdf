@@ -1,4 +1,5 @@
 package com.nectar.myblog.entity;
+
 import lombok.Data;
 
 /**
@@ -13,11 +14,6 @@ public class Comment {
      * 留言的文章id
      */
     private long articleId;
-
-    /**
-     * 留言的文章的原作者
-     */
-    private String originalAuthor;
 
     /**
      * 回复的父id 若是评论则为 0，则是评论中的回复则为对应评论的id
@@ -48,5 +44,10 @@ public class Comment {
      * 评论内容
      */
     private String commentContent;
+
+    /**
+     * 该条评论是否已读  1--未读   0--已读
+     */
+    private int isRead = 1;
 
 }

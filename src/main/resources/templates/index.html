@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:http="http://www.w3.org/1999/xhtml"
       xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4">
 <head>
-    <div th:replace="~{fragments/common::common}"></div>
+       <div th:replace="common::common"></div>
        <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
        <link rel="stylesheet" th:href="@{https://cdnjs.cloudflare.com/ajax/libs/amazeui/2.7.2/css/amazeui.min.css}">
        <link rel="stylesheet" th:href="@{https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css}" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
@@ -83,7 +83,7 @@
                             <hr style="margin-top: 10px" />
                             <div>
                                 <div class="am-u-sm-3"><a class="am-icon-github am-icon-sm" href="https://github.com" style="color: #337ab7" target="_blank" title="GitHub"></a></div>
-                                <div class="am-u-sm-3"><a class="am-icon-weibo am-icon-sm" href="https://www.weibo.com/u/6119561446" style="color: #337ab7" target="_blank" title="微博"></a></div>
+                                <div class="am-u-sm-3"><a class="am-icon-weibo am-icon-sm" href="#" style="color: #337ab7" target="_blank" title="微博"></a></div>
                             </div>
                         </div>
                     </div>
@@ -633,7 +633,6 @@
                 <button class="feedbackFormBtn am-btn am-btn-primary am-btn-block" type="button">提交反馈</button>
             </form>
         </div>
-
     </div>
 </div>
 

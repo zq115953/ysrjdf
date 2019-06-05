@@ -2,9 +2,13 @@ package com.nectar.myblog.service;
 
 import com.nectar.myblog.entity.LeaveMessageLikesRecord;
 
+/**
+ * Describe:留言中点赞业务操作
+ */
 public interface LeaveMessageLikesRecordService {
-   /**
-           * 是否点赞
+
+    /**
+     * 是否点赞
      * @param pageName 文章页
      * @param pId 父id
      * @param likeId 当前用户id
@@ -17,4 +21,5 @@ public interface LeaveMessageLikesRecordService {
      * @param leaveMessageLikesRecord
      */
     void insertLeaveMessageLikesRecord(LeaveMessageLikesRecord leaveMessageLikesRecord);
+
 }

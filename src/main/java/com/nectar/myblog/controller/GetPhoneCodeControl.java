@@ -1,4 +1,4 @@
-package com.nectar.myblog.controller.register;
+package com.nectar.myblog.controller;
 
 import com.aliyuncs.DefaultAcsClient;
 import com.aliyuncs.IAcsClient;
@@ -8,6 +8,8 @@ import com.aliyuncs.exceptions.ClientException;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
 import com.nectar.myblog.Component.PhoneRandomBuilder;
+import com.nectar.myblog.redis.StringRedisServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -15,27 +17,35 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * 注册获得验证码
+ * Describe: 注册获得手机验证码
  */
 @Controller
 public class GetPhoneCodeControl {
+
+    @Autowired
+    StringRedisServiceImpl stringRedisService;
+
+    private static final String REGISTER = "register";
+
     @PostMapping("/getCode")
     @ResponseBody
     public int getAuthCode(HttpServletRequest request){
+
         String phone = request.getParameter("phone");
         String sign = request.getParameter("sign");
         String trueMsgCode = PhoneRandomBuilder.randomBuilder();
+        System.out.println("验证手机号：" + trueMsgCode);
 
-        request.getSession().setAttribute("trueMsgCode", trueMsgCode);
-        System.out.println("msgCode is " + trueMsgCode);
+//        在redis中保存手机号验证码并设置过期时间
+        stringRedisService.set(phone, trueMsgCode);
+        stringRedisService.expire(phone, 300);
 
         String msgCode = "SMS_145290261";
-
-        //注册
-        if("register".equals(sign)){
+        //注册的短信模板
+        if(REGISTER.equals(sign)){
             msgCode = "SMS_145290261";
         }
-        //改密码
+        //改密码的短信模板
         else {
             msgCode = "SMS_145290261";
         }
@@ -50,6 +60,7 @@ public class GetPhoneCodeControl {
 
         return 1;
     }
+
     public static SendSmsResponse sendSmsResponse(String phoneNumber, String code, String msgCode) throws ClientException {
 
         //可自助调整超时时间
@@ -66,10 +77,13 @@ public class GetPhoneCodeControl {
         request.setSignName("夜深人静的风");
         //此处填写获得的短信模版CODE
         request.setTemplateCode(msgCode);
-        //短信模版中有${code}, 因此此处对应填写验证码
+        //笔者的短信模版中有${code}, 因此此处对应填写验证码
         request.setTemplateParam("{\"code\":\"" + code + "\"}");
         SendSmsResponse sendSmsResponse = acsClient.getAcsResponse(request);
 
         return sendSmsResponse;
     }
+
+
+
 }

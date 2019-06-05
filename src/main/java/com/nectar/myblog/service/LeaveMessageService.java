@@ -5,9 +5,10 @@ import net.sf.json.JSONObject;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 留言业务
+ * Describe:留言业务操作
  */
 public interface LeaveMessageService {
+
     /**
      * 保存留言信息
      * @param leaveMessageContent 留言内容
@@ -54,5 +55,21 @@ public interface LeaveMessageService {
      * 返回最新5条留言
      */
     JSONObject findFiveNewComment(int rows, int pageNum);
+
+    /**
+     * 获得留言总数
+     */
+    int countLeaveMessageNum();
+
+    /**
+     * 已读一条留言
+     * @param id 评论id
+     */
+    int readOneLeaveMessageRecord(int id);
+
+    /**
+     * 全部标记为已读
+     */
+    JSONObject readAllLeaveMessage(String username);
 
 }

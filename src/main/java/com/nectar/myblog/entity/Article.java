@@ -1,6 +1,5 @@
 package com.nectar.myblog.entity;
 
-
 import lombok.Data;
 import lombok.Value;
 

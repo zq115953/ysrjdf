@@ -1,11 +1,13 @@
 package com.nectar.myblog.service;
 
 import net.sf.json.JSONObject;
+import org.springframework.stereotype.Service;
 
 /**
- * 归档业务操作
+ * Describe: 归档业务操作
  */
 public interface ArchiveService {
+
     /**
      * 获得归档信息
      * @return
@@ -17,4 +19,5 @@ public interface ArchiveService {
      * @param archiveName
      */
     void addArchiveName(String archiveName);
+
 }

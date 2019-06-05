@@ -6,12 +6,17 @@ import com.nectar.myblog.mapper.UserMapper;
 import com.nectar.myblog.service.UserService;
 import net.sf.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Describe: user表接口具体业务逻辑
+ */
 @Service
 public class UserServiceImpl implements UserService {
+
     @Autowired
     UserMapper userMapper;
 
@@ -27,10 +32,21 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String insert(User user) {
-        if(userIsExit(user.getPhone())){
+
+        user.setUsername(user.getUsername().trim().replaceAll(" ", ""));
+        String username = user.getUsername();
+
+        if(username.length() > 35 || "".equals(username)){
+            return "4";
+        }
+        if(userIsExist(user.getPhone())){
             return "1";
         }
-        user.setAvatarImgUrl("https://ysrjdf.oss-cn-beijing.aliyuncs.com/product/timg.jpg");
+        if("male".equals(user.getGender())){
+            user.setAvatarImgUrl("https://zhy-myblog.oss-cn-shenzhen.aliyuncs.com/public/user/avatar/noLogin_male.jpg");
+        } else {
+            user.setAvatarImgUrl("https://zhy-myblog.oss-cn-shenzhen.aliyuncs.com/public/user/avatar/noLogin_female.jpg");
+        }
         userMapper.insert(user);
         int userId = userMapper.findUserIdByPhone(user.getPhone());
         insertRole(userId, RoleConstant.ROLE_USER);
@@ -39,13 +55,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public int findUserIdByPhone(String phone) {
-
         return 0;
     }
 
     @Override
     public void updatePasswordByPhone(String phone, String password) {
         userMapper.updatePassword(phone, password);
+//        密码修改成功后注销当前用户
+        SecurityContextHolder.getContext().setAuthentication(null);
     }
 
     @Override
@@ -70,7 +87,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean usernameIsExit(String username) {
+    public boolean usernameIsExist(String username) {
         User user = userMapper.findUsernameByUsername(username);
         return user != null;
     }
@@ -100,9 +117,6 @@ public class UserServiceImpl implements UserService {
         if(!"".equals(avatarImgUrl) && avatarImgUrl != null){
             jsonObject.put("status",200);
             jsonObject.put("avatarImgUrl",avatarImgUrl);
-        }else {
-            jsonObject.put("status",404);
-            jsonObject.put("avatarImgUrl","https://ysrjdf.oss-cn-beijing.aliyuncs.com/product/timg.jpg");
         }
         return jsonObject;
     }
@@ -128,13 +142,26 @@ public class UserServiceImpl implements UserService {
     @Override
     public JSONObject savePersonalDate(User user, String username) {
         JSONObject returnJson = new JSONObject();
+
+        user.setUsername(user.getUsername().trim().replaceAll(" ",""));
+        String newName = user.getUsername();
+        if(newName.length() > 35){
+            returnJson.put("status",501);
+            return returnJson;
+        } else if ("".equals(newName)){
+            returnJson.put("status",502);
+            return returnJson;
+        }
+
         //改了昵称
-        if(!user.getUsername().equals(username)){
-            if(usernameIsExit(user.getUsername())){
+        if(!newName.equals(username)){
+            if(usernameIsExist(newName)){
                 returnJson.put("status",500);
                 return returnJson;
             }
             returnJson.put("status",200);
+            //注销当前登录用户
+            SecurityContextHolder.getContext().setAuthentication(null);
         }
         //没改昵称
         else {
@@ -169,7 +196,7 @@ public class UserServiceImpl implements UserService {
      * @param phone 手机号
      * @return true--存在  false--不存在
      */
-    private boolean userIsExit(String phone){
+    private boolean userIsExist(String phone){
         User user = userMapper.findUserByPhone(phone);
         return user != null;
     }

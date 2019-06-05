@@ -4,9 +4,10 @@ import net.sf.json.JSONObject;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 悄悄话
+ * Describe:悄悄话业务操作
  */
 public interface PrivateWordService {
+
     /**
      * 发布悄悄话
      * @param privateWordContent 悄悄话

@@ -1,5 +1,6 @@
 package com.nectar.myblog.controller;
 
+import com.nectar.myblog.Component.JavaScriptCheck;
 import com.nectar.myblog.entity.LeaveMessage;
 import com.nectar.myblog.entity.LeaveMessageLikesRecord;
 import com.nectar.myblog.service.LeaveMessageLikesRecordService;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.security.Principal;
 
 /**
- * 留言
+ * Describe:
  */
 @RestController
 public class LeaveMessageControl {
@@ -93,12 +94,23 @@ public class LeaveMessageControl {
             username = principal.getName();
         } catch (NullPointerException e){
             jsonObject = new JSONObject();
-            logger.info("This user is not login");
             jsonObject.put("status",403);
             jsonObject.put("result","You are not sign in");
         }
         leaveMessage.setAnswererId(userService.findIdByUsername(username));
         leaveMessage.setPId(Integer.parseInt(parentId.substring(1)));
+        leaveMessage.setLeaveMessageContent(JavaScriptCheck.javaScriptCheck(leaveMessage.getLeaveMessageContent()));
+        String commentContent = leaveMessage.getLeaveMessageContent();
+        if('@' == commentContent.charAt(0)){
+            leaveMessage.setLeaveMessageContent(commentContent.substring(respondent.length() + 1).trim());
+        } else {
+            leaveMessage.setLeaveMessageContent(commentContent.trim());
+        }
+        if("".equals(leaveMessage.getLeaveMessageContent())){
+            jsonObject = new JSONObject();
+            jsonObject.put("status",400);
+            return jsonObject;
+        }
         leaveMessage = leaveMessageService.publishLeaveMessageReply(leaveMessage, respondent);
 
         return leaveMessageService.leaveMessageNewReply(leaveMessage, username, respondent);
@@ -128,10 +140,8 @@ public class LeaveMessageControl {
             return -2;
         }
         int likes = leaveMessageService.updateLikeByPageNameAndId(pageName, leaveMessageLikesRecord.getPId());
-        System.out.println("This leaveMessage likes is " + likes);
         leaveMessageLikesRecordService.insertLeaveMessageLikesRecord(leaveMessageLikesRecord);
         return likes;
     }
 
 }
-

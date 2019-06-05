@@ -5,6 +5,7 @@ import net.sf.json.JSONObject;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
+
  * Describe: user业务操作
  */
 public interface UserService {
@@ -26,7 +27,7 @@ public interface UserService {
     /**
      * 注册用户
      * @param user 用户
-     * @return "1"--用户存在，插入失败             "2"--用户不存在，插入成功
+     * @return "1"--用户存在，插入失败             "2"--用户不存在，插入成功       "4"--用户名太长，插入失败
      */
     @Transactional
     String insert(User user);
@@ -78,12 +79,12 @@ public interface UserService {
      * @param username 用户名
      * @return true--存在  false--不存在
      */
-    boolean usernameIsExit(String username);
+    boolean usernameIsExist(String username);
 
     /**
      * 通过手机号判断是否为超级用户
      * @param phone 手机号
-     * @return
+     * @return true--超级管理员  false--非超级管理员
      */
     boolean isSuperAdmin(String phone);
 
@@ -96,7 +97,6 @@ public interface UserService {
 
     /**
      * 获得头像url
-     * @return
      */
     JSONObject getHeadPortraitUrl(int id);
 
@@ -126,4 +126,3 @@ public interface UserService {
      */
     int countUserNum();
 }
-

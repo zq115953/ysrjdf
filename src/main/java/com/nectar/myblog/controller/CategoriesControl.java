@@ -3,6 +3,7 @@ package com.nectar.myblog.controller;
 import com.nectar.myblog.service.ArticleService;
 import com.nectar.myblog.service.CategoryService;
 import com.nectar.myblog.utils.TransCodingUtil;
+
 import net.sf.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * 分类
+ * Describe:
  */
 @RestController
 public class CategoriesControl {
@@ -38,14 +39,12 @@ public class CategoriesControl {
     @GetMapping("/getCategoryArticle")
     public JSONObject getCategoryArticle(@RequestParam("category") String category,
                                          HttpServletRequest request){
-
         try {
             category = TransCodingUtil.unicodeToString(category);
         } catch (Exception e){
         }
         int rows = Integer.parseInt(request.getParameter("rows"));
         int pageNum = Integer.parseInt(request.getParameter("pageNum"));
-
         return articleService.findArticleByCategory(category, rows, pageNum);
     }
 

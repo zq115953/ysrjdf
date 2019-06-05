@@ -1,60 +1,56 @@
 package com.nectar.myblog.controller;
 
 import com.nectar.myblog.entity.User;
-import com.nectar.myblog.service.CommentService;
-import com.nectar.myblog.service.LeaveMessageService;
-import com.nectar.myblog.service.PrivateWordService;
-import com.nectar.myblog.service.UserService;
+import com.nectar.myblog.service.*;
 import com.nectar.myblog.utils.FileUtil;
 import com.nectar.myblog.utils.TimeUtil;
 import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.security.Principal;
 
 /**
- * 用户主页
+ * Describe:
  */
 @RestController
-@SuppressWarnings("all")
-public class UserController {
+public class UserControl {
+
     private Logger logger = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
     UserService userService;
     @Autowired
-    PrivateWordService privateWordService;
-    @Autowired
-    private CommentService commentService;
+    CommentService commentService;
     @Autowired
     LeaveMessageService leaveMessageService;
+    @Autowired
+    PrivateWordService privateWordService;
+    @Autowired
+    RedisService redisService;
 
     /**
-     *上传头像
+     * 上传头像
      */
-    @PostMapping("/uploadHead")
+    @RequestMapping(value = "/uploadHead",method = RequestMethod.POST)
     public JSONObject uploadHead(HttpServletRequest request,
                                  @AuthenticationPrincipal Principal principal){
         String username;
         try {
             username = principal.getName();
-        }catch (NullPointerException e){
+        } catch (NullPointerException e){
             JSONObject jsonObject = new JSONObject();
             logger.info("This user is not login");
-            jsonObject.put("status", 403);
-            jsonObject.put("result","This user is not login" );
+            jsonObject.put("status",403);
+            jsonObject.put("result","This user is not login");
             return jsonObject;
         }
-
         JSONObject jsonObject = new JSONObject();
         String img = request.getParameter("img");
         //获得上传文件的后缀名
@@ -71,9 +67,9 @@ public class UserController {
             int userId = userService.findIdByUsername(username);
             userService.updateAvatarImgUrlById(url, userId);
             jsonObject = userService.getHeadPortraitUrl(userId);
-        }catch (Exception e){
+        } catch (Exception e){
             e.printStackTrace();
-            logger.error("更新头像失败",e.getMessage(),e);
+            logger.error("更改头像失败",e.getMessage(),e);
             return jsonObject;
         }
         return jsonObject;
@@ -89,31 +85,34 @@ public class UserController {
     }
 
     /**
-     * 获得个人信息
+     * 获得个人资料
      */
-    @GetMapping("/getUserPersonalInfo")
+    @PostMapping("/getUserPersonalInfo")
     public JSONObject getUserPersonalInfo(@AuthenticationPrincipal Principal principal){
         String username = principal.getName();
         return userService.getUserPersonalInfoByUsername(username);
     }
 
     /**
-     * 保存个人信息
+     * 保存个人资料
      */
     @PostMapping("/savePersonalDate")
-    public JSONObject savePersonalDate(User user, @AuthenticationPrincipal Principal principal){
+    public JSONObject savePersonalDate(User user,
+                                       @AuthenticationPrincipal Principal principal){
+
         String username;
         try {
             username = principal.getName();
-        }catch (NullPointerException e){
+        } catch (NullPointerException e){
             JSONObject jsonObject = new JSONObject();
             logger.info("This user is not login");
-            jsonObject.put("status", 403);
-            jsonObject.put("result", "This user is not login");
+            jsonObject.put("status",403);
+            jsonObject.put("result","This user is not login");
             return jsonObject;
         }
         return userService.savePersonalDate(user, username);
     }
+
     /**
      * 获得该用户曾今的所有评论
      */
@@ -137,7 +136,7 @@ public class UserController {
     /**
      * 获得该用户曾今的所有留言
      */
-    @PostMapping("/getUserLeaveMessage")
+    @PostMapping("/getUserLeaveWord")
     public JSONObject getUserLeaveMessage(@RequestParam("rows") String rows,
                                           @RequestParam("pageNum") String pageNum,
                                           @AuthenticationPrincipal Principal principal){
@@ -188,12 +187,73 @@ public class UserController {
             username = principal.getName();
         } catch (NullPointerException e){
             JSONObject jsonObject = new JSONObject();
-            logger.info("This user is not login");
             jsonObject.put("status",403);
             jsonObject.put("result","This user is not login");
             return jsonObject;
         }
         return privateWordService.getPrivateWordByPublisher(username, Integer.parseInt(rows), Integer.parseInt(pageNum));
+    }
+
+    /**
+     * 已读一条消息
+     * @param id 消息的id
+     * @param msgType 消息是评论消息还是留言消息  1-评论  2--留言
+     */
+    @GetMapping("/readThisMsg")
+    @ResponseBody
+    @PreAuthorize("hasAuthority('ROLE_USER')")
+    public int readThisMsg(@RequestParam("id") int id,
+                           @RequestParam("msgType") int msgType,
+                           @AuthenticationPrincipal Principal principal){
+        redisService.readOneMsgOnRedis(userService.findIdByUsername(principal.getName()), msgType);
+        if(msgType == 1){
+            return commentService.readOneCommentRecord(id);
+        } else {
+            return leaveMessageService.readOneLeaveMessageRecord(id);
+        }
+    }
+
+    /**
+     * 已读所有消息
+     * @param msgType 消息是评论消息还是留言消息  1-评论  2--留言
+     */
+    @GetMapping("/readAllMsg")
+    @ResponseBody
+    public JSONObject readAllMsg(@RequestParam("msgType") int msgType,
+                                 @AuthenticationPrincipal Principal principal){
+        String username;
+        try {
+            username = principal.getName();
+        } catch (Exception e){
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("status",403);
+            jsonObject.put("result","This user is not login");
+            return jsonObject;
+        }
+        redisService.readAllMsgOnRedis(userService.findIdByUsername(username), msgType);
+        if(msgType == 1){
+            return commentService.readAllComment(username);
+        } else {
+            return leaveMessageService.readAllLeaveMessage(username);
+        }
+    }
+
+    /**
+     * 获得用户未读消息
+     */
+    @PostMapping("/getUserNews")
+    @ResponseBody
+    public JSONObject getUserNews(@AuthenticationPrincipal Principal principal){
+        String username;
+        try {
+            username = principal.getName();
+        } catch (Exception e){
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("status",403);
+            jsonObject.put("result","This user is not login");
+            return jsonObject;
+        }
+        return redisService.getUserNews(username);
     }
 
 }

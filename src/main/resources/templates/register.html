@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:http="http://www.w3.org/1999/xhtml"
       xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4">
 <head>
-        <div th:replace="~{fragments/common::common}"></div>
+        <div th:replace="common::common"></div>
 
         <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/amazeui/2.7.2/css/amazeui.min.css">
@@ -18,7 +18,7 @@
 </head>
 <body>
 <div id="app">
-      <div th:replace="~{fragments/head :: head}"></div>
+      <div th:replace="head :: head"></div>
          <div id="register_big" class="am-g" style="height: 595px">
                     <div id="register_clear" class="am-u-lg-6 am-u-sm-9 am-u-sm-centered">
                         <h3>注册</h3>
@@ -94,7 +94,7 @@
                     </div>
                 </div>
             </div>
-   <div th:replace="~{fragments/foot :: foot}"></div>
+   <div th:replace="foot :: foot"></div>
   </div>
  <script src="/js/all.js"></script>
  <script src="/js/register.js"></script>

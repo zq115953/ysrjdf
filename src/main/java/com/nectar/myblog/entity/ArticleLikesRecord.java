@@ -1,12 +1,13 @@
 package com.nectar.myblog.entity;
 
-
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Describe: 文章点赞记录
  */
 @Data
+@NoArgsConstructor
 public class ArticleLikesRecord {
 
     private long id;
@@ -15,11 +16,6 @@ public class ArticleLikesRecord {
      * 文章id
      */
     private long articleId;
-
-    /**
-     * 原作者
-     */
-    private String originalAuthor;
 
     /**
      * 点赞人
@@ -31,12 +27,13 @@ public class ArticleLikesRecord {
      */
     private String likeDate;
 
-    public ArticleLikesRecord() {
-    }
+    /**
+     * 该条点赞是否已读  1--未读   0--已读
+     */
+    private int isRead = 1;
 
-    public ArticleLikesRecord(long articleId, String originalAuthor, int likerId, String likeDate) {
+    public ArticleLikesRecord(long articleId, int likerId, String likeDate) {
         this.articleId = articleId;
-        this.originalAuthor = originalAuthor;
         this.likerId = likerId;
         this.likeDate = likeDate;
     }

@@ -1,12 +1,13 @@
 package com.nectar.myblog.entity;
 
-
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Describe: 留言中点赞
  */
 @Data
+@NoArgsConstructor
 public class LeaveMessageLikesRecord {
 
     private long id;
@@ -30,9 +31,6 @@ public class LeaveMessageLikesRecord {
      * 点赞时间
      */
     private String likeDate;
-
-    public LeaveMessageLikesRecord() {
-    }
 
     public LeaveMessageLikesRecord(String pageName, int pId, int likerId, String likeDate) {
         this.pageName = pageName;

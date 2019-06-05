@@ -5,4 +5,6 @@ package com.nectar.myblog.constant;
  */
 public interface SiteOwner {
     String SITE_OWNER = "ysrjdf";
+
+    String SITE_OWNER_URL = "http://120.77.87.27:7777";
 }

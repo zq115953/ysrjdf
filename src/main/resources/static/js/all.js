@@ -1,4 +1,4 @@
-
+id="weixin"
 // 失败消息盒
 function dangerNotice(notice) {
     $('.dangerNotice').html(notice);
@@ -133,7 +133,7 @@ $('#sidebar_toggle').click(function () {
         error:function () {
         }
     });
-    $('.weixinPublic').attr("src","https://zhy-myblog.oss-cn-shenzhen.aliyuncs.com/static/img/weixin.jpg");
+    $('.weixinPublic').attr("src","https://ysrjdf.oss-cn-beijing.aliyuncs.com/product/Cache_b66773737b89dcb..jpg");
 });
 
 //获得登录用户未读消息

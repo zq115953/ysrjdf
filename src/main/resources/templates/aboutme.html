@@ -39,7 +39,6 @@
                     <li><a class="top_bar" href="/photo" style="cursor: pointer;"><span class="fa fa-image fa-lg"></span>&nbsp;相册</a></li>
                     <li><a class="top_bar" href="/aboutme" style="cursor: pointer;"><span class="fa fa-user"></span>&nbsp;关于我</a> </li>
                 </ul>
-                <audio  style="display: none" autoplay="autoplay" controls="controls"loop="loop" preload="auto" src="https://ysrjdf.oss-cn-beijing.aliyuncs.com/photo/2/huan.mp3"></audio>
                 <div class="am-topbar-right" th:if="${#httpServletRequest.remoteUser}">
                     <div class="am-dropdown" data-am-dropdown="{boundary: '.am-topbar'}">
                         <button class="personalSpace am-btn am-btn-secondary am-topbar-btn am-btn-sm am-dropdown-toggle" data-am-dropdown-toggle><span sec:authentication="name"></span> <span class="am-icon-caret-down"></span></button>

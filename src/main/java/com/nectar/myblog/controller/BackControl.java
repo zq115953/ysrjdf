@@ -54,13 +54,6 @@ public class BackControl {
     }
 
     /**
-     * 跳转我的相册页
-     */
-    @GetMapping("/photo")
-    public String photo(){
-        return "photo";
-    }
-    /**
      * 跳转我的故事页
      */
     @GetMapping("/mystory")
@@ -112,14 +105,6 @@ public class BackControl {
         return "update";
     }
 
-    /**
-     * 跳转友链页
-     */
-    @GetMapping("/friendlylink")
-    public String friendlylink(HttpServletRequest request){
-        request.getSession().removeAttribute("lastUrl");
-        return "friendlylink";
-    }
 
     /**
      * 跳转阿狸表白页
@@ -237,6 +222,11 @@ public class BackControl {
         } catch (Exception e){
         }
         return "tags";
+    }
+
+    @GetMapping("/ss")
+    public String supe2r(){
+        return "ss";
     }
 
     /**

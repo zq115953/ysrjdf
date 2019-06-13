@@ -470,6 +470,16 @@ h1 span{
     padding:2px;
     margin:5px;
 }
+#nav{
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    padding: 10px;
+    text-align: center;
+    background-color: black;
+    z-index: 999;
+
+}
 #container > div img {
     padding: 0px;
     display: block;
